@@ -1,5 +1,9 @@
 # YouTube Live Timelapse Maker
 
+**[فارسی](README.fa.md)** | English
+
+![Banner](assets/banner.png)
+
 A Python desktop app that captures screenshots from a YouTube live stream at regular intervals and compiles them into a timelapse video.
 
 ## How It Works
@@ -19,6 +23,22 @@ If the stream URL expires during a long capture session, it automatically refres
 - [Pillow](https://pypi.org/project/Pillow/)
 
 ## Installation
+
+### 1. Install Python
+
+Download and install Python 3.10 or newer from the official website:
+
+https://www.python.org/downloads/
+
+> **Windows users:** Make sure to check **"Add Python to PATH"** during installation.
+
+To verify the installation, open a terminal and run:
+
+```bash
+python --version
+```
+
+### 2. Install dependencies
 
 ```bash
 pip install -r requirements.txt
