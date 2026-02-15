@@ -235,9 +235,10 @@ class App:
         content = tk.Frame(root)
         content.pack(fill="both", expand=True, padx=10, pady=10)
 
-        # LEFT SIDE: Streams
-        left_frame = tk.Frame(content)
-        left_frame.pack(side="left", fill="both", expand=True)
+        # LEFT SIDE: Streams (fixed width)
+        left_frame = tk.Frame(content, width=650)
+        left_frame.pack(side="left", fill="y")
+        left_frame.pack_propagate(False)
 
         # Add Stream button
         btn_frame = tk.Frame(left_frame, pady=5)
@@ -254,7 +255,7 @@ class App:
 
         self.stream_container.bind(
             "<Configure>",
-            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+            lambda _: canvas.configure(scrollregion=canvas.bbox("all"))
         )
 
         canvas.create_window((0, 0), window=self.stream_container, anchor="nw")
@@ -263,14 +264,13 @@ class App:
         canvas.pack(side="left", fill="both", expand=True)
         scrollbar.pack(side="right", fill="y")
 
-        # RIGHT SIDE: Log area
-        right_frame = tk.Frame(content, width=400)
-        right_frame.pack(side="right", fill="both", padx=(10, 0))
-        right_frame.pack_propagate(False)
+        # RIGHT SIDE: Log area (fills remaining space)
+        right_frame = tk.Frame(content)
+        right_frame.pack(side="right", fill="both", expand=True, padx=(10, 0))
 
         tk.Label(right_frame, text="Activity Log", font=("Arial", 11, "bold")).pack(anchor="w", pady=(0, 5))
 
-        self.log_box = scrolledtext.ScrolledText(right_frame, width=50, height=30, state="disabled",
+        self.log_box = scrolledtext.ScrolledText(right_frame, state="disabled",
                                                   font=("Consolas", 9), wrap="word")
         self.log_box.pack(fill="both", expand=True)
 
