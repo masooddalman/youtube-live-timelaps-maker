@@ -3,12 +3,30 @@ YouTube Live Timelapse Maker — Multi-Stream GUI
 """
 
 import os
+import re
 import threading
 import tkinter as tk
 from tkinter import ttk, scrolledtext
 
 from capture import run as capture_run
 from timelapse import build_timelapse
+
+
+def sanitize_filename(name: str) -> str:
+    """Sanitize a string for use in file/folder names."""
+    # Replace invalid characters with underscore
+    name = re.sub(r'[<>:"/\\|?*]', '_', name)
+    # Remove leading/trailing spaces and dots
+    name = name.strip('. ')
+    # Replace multiple spaces/underscores with single underscore
+    name = re.sub(r'[\s_]+', '_', name)
+    # Limit length
+    if len(name) > 100:
+        name = name[:100]
+    # Fallback if empty
+    if not name:
+        name = "unnamed"
+    return name
 
 
 class StreamRow:
@@ -35,20 +53,26 @@ class StreamRow:
         self.url_entry.insert(0, "https://www.youtube.com/live/")
         self.url_entry.grid(row=1, column=1, columnspan=3, padx=5, pady=2)
 
+        # Name
+        tk.Label(self.frame, text="Name:").grid(row=2, column=0, sticky="w", padx=5)
+        self.name_entry = tk.Entry(self.frame, width=30)
+        self.name_entry.insert(0, f"stream_{stream_id}")
+        self.name_entry.grid(row=2, column=1, columnspan=3, sticky="w", padx=5, pady=2)
+
         # Interval
-        tk.Label(self.frame, text="Interval (s):").grid(row=2, column=0, sticky="w", padx=5)
+        tk.Label(self.frame, text="Interval (s):").grid(row=3, column=0, sticky="w", padx=5)
         self.interval_entry = tk.Entry(self.frame, width=10)
         self.interval_entry.insert(0, "180")
-        self.interval_entry.grid(row=2, column=1, sticky="w", padx=5, pady=2)
+        self.interval_entry.grid(row=3, column=1, sticky="w", padx=5, pady=2)
 
         # Status
-        tk.Label(self.frame, text="Status:").grid(row=2, column=2, sticky="e", padx=5)
+        tk.Label(self.frame, text="Status:").grid(row=3, column=2, sticky="e", padx=5)
         self.status_label = tk.Label(self.frame, text="Idle", fg="gray", font=("Arial", 9))
-        self.status_label.grid(row=2, column=3, sticky="w", padx=5)
+        self.status_label.grid(row=3, column=3, sticky="w", padx=5)
 
         # Buttons
         btn_frame = tk.Frame(self.frame)
-        btn_frame.grid(row=3, column=0, columnspan=4, pady=5)
+        btn_frame.grid(row=4, column=0, columnspan=4, pady=5)
 
         self.start_btn = tk.Button(btn_frame, text="Start", width=10, bg="#4CAF50", fg="white",
                                    command=self.start)
@@ -78,10 +102,12 @@ class StreamRow:
         self.status_label.config(text=text, fg=color)
 
     def get_screenshots_dir(self):
-        return f"screenshots/stream_{self.stream_id}"
+        name = sanitize_filename(self.name_entry.get().strip())
+        return f"screenshots/{name}"
 
     def get_output_path(self):
-        return f"timelapse_stream_{self.stream_id}.mp4"
+        name = sanitize_filename(self.name_entry.get().strip())
+        return f"timelapse_{name}.mp4"
 
     # Actions
 
@@ -89,6 +115,11 @@ class StreamRow:
         url = self.url_entry.get().strip()
         if not url:
             self.set_status("Error: No URL", "red")
+            return
+
+        name = self.name_entry.get().strip()
+        if not name:
+            self.set_status("Error: No name", "red")
             return
 
         try:
@@ -103,6 +134,7 @@ class StreamRow:
         self.start_btn.config(state="disabled")
         self.stop_btn.config(state="normal")
         self.url_entry.config(state="disabled")
+        self.name_entry.config(state="disabled")
         self.interval_entry.config(state="disabled")
         self.remove_btn.config(state="disabled")
 
@@ -130,9 +162,10 @@ class StreamRow:
     def _worker(self, url: str, interval: int):
         try:
             screenshots_dir = self.get_screenshots_dir()
+            stream_name = self.name_entry.get().strip()
 
             def log(msg):
-                self.on_log(f"[Stream {self.stream_id}] {msg}")
+                self.on_log(f"[{stream_name}] {msg}")
 
             log("Starting capture...")
             capture_run(
@@ -146,12 +179,14 @@ class StreamRow:
             log("Capture stopped.")
             self.set_status("Stopped", "gray")
         except Exception as e:
-            self.on_log(f"[Stream {self.stream_id}] ERROR: {str(e)}")
+            stream_name = self.name_entry.get().strip()
+            self.on_log(f"[{stream_name}] ERROR: {str(e)}")
             self.set_status(f"Error: {str(e)[:30]}", "red")
         finally:
             self.start_btn.config(state="normal")
             self.stop_btn.config(state="disabled")
             self.url_entry.config(state="normal")
+            self.name_entry.config(state="normal")
             self.interval_entry.config(state="normal")
             self.remove_btn.config(state="normal")
 
@@ -159,9 +194,10 @@ class StreamRow:
         try:
             screenshots_dir = self.get_screenshots_dir()
             output_path = self.get_output_path()
+            stream_name = self.name_entry.get().strip()
 
             def log(msg):
-                self.on_log(f"[Stream {self.stream_id}] {msg}")
+                self.on_log(f"[{stream_name}] {msg}")
 
             log("Building timelapse...")
             build_timelapse(
@@ -172,7 +208,8 @@ class StreamRow:
 
             self.set_status("Build complete", "green")
         except Exception as e:
-            self.on_log(f"[Stream {self.stream_id}] Build ERROR: {str(e)}")
+            stream_name = self.name_entry.get().strip()
+            self.on_log(f"[{stream_name}] Build ERROR: {str(e)}")
             self.set_status(f"Build error: {str(e)[:20]}", "red")
 
 
