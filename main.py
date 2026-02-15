@@ -14,9 +14,10 @@ from timelapse import build_timelapse
 class StreamRow:
     """Represents one stream in the UI"""
 
-    def __init__(self, parent, stream_id: int, on_remove):
+    def __init__(self, parent, stream_id: int, on_remove, on_log):
         self.stream_id = stream_id
         self.on_remove = on_remove
+        self.on_log = on_log
         self._stop = False
         self._thread = None
 
@@ -131,9 +132,9 @@ class StreamRow:
             screenshots_dir = self.get_screenshots_dir()
 
             def log(msg):
-                # We could add a per-stream log if needed
-                pass
+                self.on_log(f"[Stream {self.stream_id}] {msg}")
 
+            log("Starting capture...")
             capture_run(
                 youtube_url=url,
                 interval=interval,
@@ -142,8 +143,10 @@ class StreamRow:
                 stop_flag=lambda: self._stop,
             )
 
+            log("Capture stopped.")
             self.set_status("Stopped", "gray")
         except Exception as e:
+            self.on_log(f"[Stream {self.stream_id}] ERROR: {str(e)}")
             self.set_status(f"Error: {str(e)[:30]}", "red")
         finally:
             self.start_btn.config(state="normal")
@@ -158,8 +161,9 @@ class StreamRow:
             output_path = self.get_output_path()
 
             def log(msg):
-                pass
+                self.on_log(f"[Stream {self.stream_id}] {msg}")
 
+            log("Building timelapse...")
             build_timelapse(
                 screenshots_dir=screenshots_dir,
                 output_path=output_path,
@@ -168,6 +172,7 @@ class StreamRow:
 
             self.set_status("Build complete", "green")
         except Exception as e:
+            self.on_log(f"[Stream {self.stream_id}] Build ERROR: {str(e)}")
             self.set_status(f"Build error: {str(e)[:20]}", "red")
 
 
@@ -175,7 +180,7 @@ class App:
     def __init__(self, root: tk.Tk):
         self.root = root
         self.root.title("YouTube Live Timelapse Maker — Multi-Stream")
-        self.root.geometry("650x600")
+        self.root.geometry("1100x650")
 
         self.streams = []
         self.next_id = 1
@@ -189,16 +194,24 @@ class App:
         tk.Label(header, text="Multi-Stream Manager", bg="#1976D2", fg="white",
                 font=("Arial", 10)).pack()
 
+        # Main content area (split left/right)
+        content = tk.Frame(root)
+        content.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # LEFT SIDE: Streams
+        left_frame = tk.Frame(content)
+        left_frame.pack(side="left", fill="both", expand=True)
+
         # Add Stream button
-        btn_frame = tk.Frame(root, padx=10, pady=10)
+        btn_frame = tk.Frame(left_frame, pady=5)
         btn_frame.pack(fill="x")
 
         tk.Button(btn_frame, text="➕ Add Stream", width=15, bg="#4CAF50", fg="white",
                  font=("Arial", 10, "bold"), command=self.add_stream).pack(side="left")
 
         # Scrollable stream container
-        canvas = tk.Canvas(root, highlightthickness=0)
-        scrollbar = tk.Scrollbar(root, orient="vertical", command=canvas.yview)
+        canvas = tk.Canvas(left_frame, highlightthickness=0)
+        scrollbar = tk.Scrollbar(left_frame, orient="vertical", command=canvas.yview)
 
         self.stream_container = tk.Frame(canvas)
 
@@ -210,14 +223,35 @@ class App:
         canvas.create_window((0, 0), window=self.stream_container, anchor="nw")
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        canvas.pack(side="left", fill="both", expand=True, padx=10, pady=10)
-        scrollbar.pack(side="right", fill="y", pady=10)
+        canvas.pack(side="left", fill="both", expand=True)
+        scrollbar.pack(side="right", fill="y")
+
+        # RIGHT SIDE: Log area
+        right_frame = tk.Frame(content, width=400)
+        right_frame.pack(side="right", fill="both", padx=(10, 0))
+        right_frame.pack_propagate(False)
+
+        tk.Label(right_frame, text="Activity Log", font=("Arial", 11, "bold")).pack(anchor="w", pady=(0, 5))
+
+        self.log_box = scrolledtext.ScrolledText(right_frame, width=50, height=30, state="disabled",
+                                                  font=("Consolas", 9), wrap="word")
+        self.log_box.pack(fill="both", expand=True)
 
         # Add one default stream
         self.add_stream()
 
+    def log(self, msg: str):
+        """Thread-safe log to the text box."""
+        self.root.after(0, self._append_log, msg)
+
+    def _append_log(self, msg: str):
+        self.log_box.config(state="normal")
+        self.log_box.insert("end", msg + "\n")
+        self.log_box.see("end")
+        self.log_box.config(state="disabled")
+
     def add_stream(self):
-        stream = StreamRow(self.stream_container, self.next_id, self.remove_stream)
+        stream = StreamRow(self.stream_container, self.next_id, self.remove_stream, self.log)
         stream.pack(fill="x", pady=5)
         self.streams.append(stream)
         self.next_id += 1
