@@ -39,22 +39,24 @@ def capture_frame(stream_url: str, save_path: str) -> bool:
     return True
 
 
-def run(youtube_url: str = None, interval: int = None, on_log=None, stop_flag=None):
+def run(youtube_url: str = None, interval: int = None, screenshots_dir: str = None, on_log=None, stop_flag=None):
     """
     Main capture loop.
-      youtube_url : stream URL  (falls back to config)
-      interval    : seconds between captures (falls back to config)
-      on_log      : callback(str) for log messages
-      stop_flag   : callable that returns True when we should stop
+      youtube_url      : stream URL  (falls back to config)
+      interval         : seconds between captures (falls back to config)
+      screenshots_dir  : directory to save frames (falls back to config)
+      on_log           : callback(str) for log messages
+      stop_flag        : callable that returns True when we should stop
     """
     from config import YOUTUBE_URL, CAPTURE_INTERVAL
 
     youtube_url = youtube_url or YOUTUBE_URL
     interval = interval or CAPTURE_INTERVAL
+    screenshots_dir = screenshots_dir or SCREENSHOTS_DIR
     log = on_log or print
     should_stop = stop_flag or (lambda: False)
 
-    os.makedirs(SCREENSHOTS_DIR, exist_ok=True)
+    os.makedirs(screenshots_dir, exist_ok=True)
 
     log("Fetching stream URL...")
     stream_url = get_stream_url(youtube_url)
@@ -66,7 +68,7 @@ def run(youtube_url: str = None, interval: int = None, on_log=None, stop_flag=No
     while not should_stop():
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         filename = f"frame_{frame_count:05d}_{timestamp}.jpg"
-        save_path = os.path.join(SCREENSHOTS_DIR, filename)
+        save_path = os.path.join(screenshots_dir, filename)
 
         ok = capture_frame(stream_url, save_path)
         if ok:
