@@ -6,6 +6,7 @@ import os
 import re
 import threading
 import tkinter as tk
+import webbrowser
 from tkinter import ttk, scrolledtext
 
 from capture import run as capture_run
@@ -231,10 +232,20 @@ class App:
         header = tk.Frame(root, bg="#1976D2", padx=10, pady=10)
         header.pack(fill="x")
 
-        tk.Label(header, text="YouTube Live Timelapse Maker", bg="#1976D2", fg="white",
+        # Title
+        title_frame = tk.Frame(header, bg="#1976D2")
+        title_frame.pack(fill="x")
+
+        tk.Label(title_frame, text="YouTube Live Timelapse Maker", bg="#1976D2", fg="white",
                 font=("Arial", 14, "bold")).pack()
-        tk.Label(header, text="Multi-Stream Manager", bg="#1976D2", fg="white",
+        tk.Label(title_frame, text="Multi-Stream Manager", bg="#1976D2", fg="white",
                 font=("Arial", 10)).pack()
+
+        # About button (top right)
+        about_btn = tk.Button(header, text="ℹ About", bg="#1565C0", fg="white",
+                             font=("Arial", 9), command=self.open_github, relief=tk.FLAT,
+                             cursor="hand2", padx=10, pady=3)
+        about_btn.place(relx=1.0, rely=0.0, anchor="ne")
 
         # Main content area (split left/right)
         content = tk.Frame(root)
@@ -305,6 +316,10 @@ class App:
 
         stream.destroy()
         self.streams.remove(stream)
+
+    def open_github(self):
+        """Open the GitHub repository in the default browser."""
+        webbrowser.open("https://github.com/masooddalman/youtube-live-timelaps-maker")
 
 
 if __name__ == "__main__":

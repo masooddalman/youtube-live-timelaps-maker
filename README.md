@@ -4,7 +4,16 @@
 
 ![Banner](assets/banner.png)
 
-A Python desktop app that captures screenshots from a YouTube live stream at regular intervals and compiles them into a timelapse video.
+A Python desktop app that captures screenshots from multiple YouTube live streams simultaneously at regular intervals and compiles them into timelapse videos. Perfect for monitoring multiple streams or creating time-lapse content from live broadcasts.
+
+## Features
+
+- **Multi-stream support** — capture from unlimited YouTube live streams concurrently
+- **Custom naming** — name each stream for organized output
+- **Independent controls** — start, stop, and build each stream separately
+- **Live activity log** — monitor all streams in real-time
+- **Auto URL refresh** — handles stream URL expiration automatically
+- **Organized output** — separate folders for screenshots and videos
 
 ## How It Works
 
@@ -52,16 +61,32 @@ Run the app:
 python main.py
 ```
 
-A GUI window will open with:
+### Multi-Stream Interface
 
-- **YouTube Live URL** — paste any YouTube live stream link
-- **Interval (seconds)** — time between each screenshot (default: 180 = 3 minutes)
-- **Start** — begins capturing frames
-- **Stop & Build** — stops capturing and automatically builds the timelapse video
+The app opens with a split-panel interface:
 
-The output video is saved as `timelapse.mp4` in the project folder.
+**Left Panel (Streams):**
+- Click **"➕ Add Stream"** to add more streams
+- Each stream has:
+  - **URL** — paste the YouTube live stream link
+  - **Name** — custom name for the stream (used for folders/files)
+  - **Interval** — seconds between screenshots (default: 180)
+  - **Status** — real-time status indicator
+  - **Start/Stop** — independent capture controls
+  - **Build** — compile captured frames into a timelapse
+  - **Remove** — delete the stream from the list
 
-Also, you don't need to open the youtube livestream :D, just keep the app running and also keep the internet connection. have fun
+**Right Panel (Activity Log):**
+- Live activity feed showing all stream operations
+- Each log entry is tagged with the stream name
+
+### Output Structure
+
+For a stream named `my_stream`:
+- Screenshots: `screenshots/my_stream/`
+- Video: `output/timelapse_my_stream.mp4`
+
+> **Note:** You don't need to open the YouTube livestream in a browser. Just keep the app running with an active internet connection.
 
 ## Configuration
 
@@ -75,6 +100,12 @@ Default settings can be changed in `config.py`:
 | `TIMELAPSE_FPS` | `30` | Frame rate of the output video |
 | `TIMELAPSE_OUTPUT` | `timelapse.mp4` | Output video filename |
 
+## Screenshots
+
+### Main Interface
+![Main UI](assets/appUI.png)
+*Multi-stream manager with activity log*
+
 ## Project Structure
 
 ```
@@ -84,5 +115,10 @@ youtube-live-timelaps-maker/
 ├── timelapse.py     # Timelapse video compiler
 ├── config.py        # Default settings
 ├── requirements.txt # Python dependencies
-└── screenshots/     # Captured frames (created automatically)
+├── screenshots/     # Captured frames (auto-created)
+│   ├── stream_1/    # Frames for stream 1
+│   └── stream_2/    # Frames for stream 2
+└── output/          # Compiled timelapse videos (auto-created)
+    ├── timelapse_stream_1.mp4
+    └── timelapse_stream_2.mp4
 ```
