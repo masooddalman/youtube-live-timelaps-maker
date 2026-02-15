@@ -107,7 +107,7 @@ class StreamRow:
 
     def get_output_path(self):
         name = sanitize_filename(self.name_entry.get().strip())
-        return f"timelapse_{name}.mp4"
+        return f"output/timelapse_{name}.mp4"
 
     # Actions
 
@@ -133,10 +133,11 @@ class StreamRow:
         self._stop = False
         self.start_btn.config(state="disabled")
         self.stop_btn.config(state="normal")
+        self.build_btn.config(state="disabled")
+        self.remove_btn.config(state="disabled")
         self.url_entry.config(state="disabled")
         self.name_entry.config(state="disabled")
         self.interval_entry.config(state="disabled")
-        self.remove_btn.config(state="disabled")
 
         self.set_status("Starting...", "orange")
 
@@ -185,16 +186,20 @@ class StreamRow:
         finally:
             self.start_btn.config(state="normal")
             self.stop_btn.config(state="disabled")
+            self.build_btn.config(state="normal")
+            self.remove_btn.config(state="normal")
             self.url_entry.config(state="normal")
             self.name_entry.config(state="normal")
             self.interval_entry.config(state="normal")
-            self.remove_btn.config(state="normal")
 
     def _build_worker(self):
         try:
             screenshots_dir = self.get_screenshots_dir()
             output_path = self.get_output_path()
             stream_name = self.name_entry.get().strip()
+
+            # Create output directory if it doesn't exist
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
             def log(msg):
                 self.on_log(f"[{stream_name}] {msg}")
